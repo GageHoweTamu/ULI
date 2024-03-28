@@ -14,10 +14,11 @@ fn read_file(filename: &str) -> String { // return file content as a string
     }
 }
 
-#[tauri::command]
-fn search_flatpak( input: &str) -> String {
+// main function to handle commands
+fn run_bash_command(command: &str) -> String {
     let output = Command::new("bash")
-        .arg("search")
+        .arg("-c")
+        .arg(command)
         .output()
         .expect("Failed to execute command");
 
@@ -28,9 +29,29 @@ fn search_flatpak( input: &str) -> String {
     str::from_utf8(&output.stdout).unwrap().to_string()
 }
 
+#[tauri::command] // search for a flatpak package
+fn search_flatpak( input: &str) -> String {
+    let command = format!("flatpak search {}", input);
+    run_bash_command(&command)
+}
+
+#[tauri::command] // get info about a flatpak package
+fn get_info_flatpak( input: &str) -> String {
+    let command = format!("flatpak info {}", input);
+    run_bash_command(&command)
+}
+
+#[tauri::command] // install a flatpak package
+fn install_flatpak( input: &str) -> String {
+    let command = format!("flatpak install {}", input);
+    run_bash_command(&command)
+}
+
+// https://docs.flatpak.org/en/latest/flatpak-command-reference.html
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![read_file, search_flatpak])
+        .invoke_handler(tauri::generate_handler![read_file, search_flatpak, get_info_flatpak, install_flatpak])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

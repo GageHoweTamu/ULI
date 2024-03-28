@@ -11,6 +11,8 @@ function App() {
   const [searchTerm, setSearchTerm] = createSignal("");
   const [searchResult, setSearchResult] = createSignal("");
   const [mode, setMode] = createSignal(1); // modes: 1 = main menu, 2 = software menu, 3 = help menu
+  const [devlog, setDevlog] = createSignal(""); // for debugging
+  const [theme, setTheme] = createSignal(1); // themes: 1 = standard light, 2 = standard dark. Don't know how to implement this yet.
 
   async function read_file() {
     setFileContent(await invoke("read_file", { file: fileContent() }));
@@ -22,6 +24,16 @@ function App() {
     setSearchResult(result as string);
     console.log("search_flatpak with search_term ", searchTerm(), "yielded ", searchResult());
     return searchResult();
+  }
+  async function get_info_flatpak() {
+    const result = await invoke("get_info_flatpak", { app: searchResult() });
+    console.log("get_info_flatpak with app ", searchResult(), "yielded ", result);
+    return result;
+  }
+  async function install_flatpak() {
+    const result = await invoke("install_flatpak", { app: searchResult() });
+    console.log("install_flatpak with app ", searchResult(), "yielded ", result);
+    return result;
   }
 
   const htmlMenu = (
@@ -59,27 +71,31 @@ function App() {
       </form>
 
       <p>{output()}</p>
+      <p>{devlog()}</p>
     </div>
   );
 
   const softwareMenu = ( // This is where a given app will be displayed with all its info
     <div class="container">
-      
+      <p>{devlog()}</p>
     </div>
   );
   const htmlHelp = ( // This is for help and info
     <div class="container">
-      // This is where a given app will be displayed with all its info
+      <p>{devlog()}</p> 
     </div>
   );
 
   if (mode() == 1) {
+    setDevlog("mode is " + mode());
     return (htmlMenu);
   }
   else if (mode() == 2) {
+    setDevlog("mode is " + mode());
     return (softwareMenu);
   }
   else {
+    setDevlog("mode is " + mode());
     return (htmlHelp);
   }
 }
