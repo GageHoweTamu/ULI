@@ -7,13 +7,17 @@ use std::str;
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 
 #[tauri::command]
+fn initialize_flatpak() -> String {
+    let command = format!("sudo apt install flatpak -y && flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo");
+    run_bash_command(&command)
+}
+#[tauri::command]
 fn read_file(filename: &str) -> String { // return file content as a string
     match std::fs::read_to_string(filename) {
         Ok(content) => content,
         Err(e) => e.to_string()
     }
 }
-
 // main function to handle commands
 fn run_bash_command(command: &str) -> String {
     let output = Command::new("bash")
@@ -41,6 +45,12 @@ fn get_info_flatpak( input: &str) -> String {
     run_bash_command(&command)
 }
 
+#[tauri::command] // list all installed flatpak packages
+fn list_installed_flatpak() -> String {
+    let command = "flatpak list";
+    run_bash_command(&command)
+}
+
 #[tauri::command] // install a flatpak package
 fn install_flatpak( input: &str) -> String {
     let command = format!("flatpak install {}", input);
@@ -51,7 +61,7 @@ fn install_flatpak( input: &str) -> String {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![read_file, search_flatpak, get_info_flatpak, install_flatpak])
+        .invoke_handler(tauri::generate_handler![read_file, search_flatpak, get_info_flatpak, install_flatpak, list_installed_flatpak, initialize_flatpak])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
