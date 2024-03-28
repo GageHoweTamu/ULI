@@ -2,18 +2,30 @@ import { createSignal } from "solid-js";
 import logo from "./assets/logo.svg";
 import { invoke } from "@tauri-apps/api/tauri";
 import "./App.css";
+import html from "solid-js/html";
+import { app } from "@tauri-apps/api";
 
 function App() {
-  const [greetMsg, setGreetMsg] = createSignal("");
-  const [name, setName] = createSignal("");
+  const [fileContent, setFileContent] = createSignal(""); // temporary storage for the contents of the file; is this even necessary?
+  const [output, setOutput] = createSignal("");
+  const [searchTerm, setSearchTerm] = createSignal("");
+  const [searchResult, setSearchResult] = createSignal("");
+  const [mode, setMode] = createSignal(1); // modes: 1 = main menu, 2 = software menu, 3 = help menu
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    setGreetMsg(await invoke("greet", { name: name() }));
+  async function read_file() {
+    setFileContent(await invoke("read_file", { file: fileContent() }));
+    console.log("read_file yielded ", fileContent());
+    return fileContent();
+  }
+  async function search_flatpak() {
+    const result = await invoke("search_flatpak", { search: searchTerm() });
+    setSearchResult(result as string);
+    console.log("search_flatpak with search_term ", searchTerm(), "yielded ", searchResult());
+    return searchResult();
   }
 
-  return (
-    // This is the main html content of the app
+  const htmlMenu = (
+    // This is the main menu, where the user can browse or search for software
     <div class="container">
       <h1>Welcome to Tauri!</h1>
 
@@ -35,20 +47,41 @@ function App() {
         class="row"
         onSubmit={(e) => {
           e.preventDefault();
-          greet();
+          search_flatpak();
         }}
       >
         <input
           id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Enter a name..."
         />
         <button type="submit">Greet</button>
       </form>
 
-      <p>{greetMsg()}</p>
+      <p>{output()}</p>
     </div>
   );
+
+  const softwareMenu = ( // This is where a given app will be displayed with all its info
+    <div class="container">
+      
+    </div>
+  );
+  const htmlHelp = ( // This is for help and info
+    <div class="container">
+      // This is where a given app will be displayed with all its info
+    </div>
+  );
+
+  if (mode() == 1) {
+    return (htmlMenu);
+  }
+  else if (mode() == 2) {
+    return (softwareMenu);
+  }
+  else {
+    return (htmlHelp);
+  }
 }
 
 export default App;
