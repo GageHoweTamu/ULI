@@ -57,11 +57,17 @@ fn install_flatpak( input: &str) -> String {
     run_bash_command(&command)
 }
 
+#[tauri::command] // uninstall a flatpak package
+fn uninstall_flatpak( input: &str) -> String {
+    let command = format!("flatpak uninstall {}", input);
+    run_bash_command(&command)
+}
+
 // https://docs.flatpak.org/en/latest/flatpak-command-reference.html
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![read_file, search_flatpak, get_info_flatpak, install_flatpak, list_installed_flatpak, initialize_flatpak])
+        .invoke_handler(tauri::generate_handler![read_file, search_flatpak, get_info_flatpak, install_flatpak, list_installed_flatpak, initialize_flatpak, uninstall_flatpak])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

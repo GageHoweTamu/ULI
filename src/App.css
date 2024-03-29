@@ -5,3 +5,36 @@
 .logo.solid:hover {
   filter: drop-shadow(0 0 2em #2f5d90);
 }
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #000000;
+  color: #ffffff;
+  margin: 0;
+  padding: 0;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(27, 27, 27, 0.5); /* makes everything else this color with some opacity */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100; /* Makes the popup on top of everything */
+}
+
+.modal-content {
+  padding: 20px;
+  border-radius: 4px;
+}

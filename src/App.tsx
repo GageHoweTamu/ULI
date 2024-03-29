@@ -16,6 +16,10 @@ function App() {
   const [devlog, setDevlog] = createSignal(""); // for debugging
   const [theme, setTheme] = createSignal(1); // themes: 1 = standard light, 2 = standard dark. Don't know how to implement this yet.
   const [currentApp, setCurrentApp] = createSignal(""); // the app that the user is currently looking at
+  const [popupIsOpen, setPopupIsOpen] = createSignal(false);
+  const togglePopup = () => {
+    setPopupIsOpen(!popupIsOpen());
+  }
 
   async function initialize_flatpak() {
     const result = await invoke("initialize_flatpak");
@@ -40,41 +44,30 @@ function App() {
     return searchResult();
   }
   async function get_info_flatpak() {
-    const result = await invoke("get_info_flatpak", { app: searchResult() });
-    console.log("get_info_flatpak with app ", searchResult(), "yielded ", result);
+    const result = await invoke("get_info_flatpak", { app: currentApp() });
+    console.log("get_info_flatpak with app ", currentApp(), "yielded ", result);
     return result;
   }
   async function list_installed_flatpak() {
-    const result = await invoke("get_currently_installed_flatpak", { app: searchResult() });
-    console.log("get_currently_installed_flatpak with app ", searchResult(), "yielded ", result);
+    const result = await invoke("get_currently_installed_flatpak", {});
+    console.log("list_installed_flatpak yielded ", result);
     return result;
   }
   async function install_flatpak() {
-    const result = await invoke("install_flatpak", { app: searchResult() });
-    console.log("install_flatpak with app ", searchResult(), "yielded ", result);
+    const result = await invoke("install_flatpak", { app: currentApp() });
+    console.log("install_flatpak with app ", currentApp(), "yielded ", result);
+    return result;
+  }
+  async function uninstall_flatpak() {
+    const result = await invoke("uninstall_flatpak", { app: currentApp() });
+    console.log("uninstall_flatpak with app ", currentApp(), "yielded ", result);
     return result;
   }
 
-  const htmlMenu = (
-    // This is the main menu, where the user can browse or search for software
+  const mainMenu = ( // This is the main menu, where the user can browse or search for software
     <div class="container">
       <h1>Welcome to Tauri!</h1>
-
-      <div class="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" class="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" class="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://solidjs.com" target="_blank">
-          <img src={logo} class="logo solid" alt="Solid logo" />
-        </a>
-      </div>
-
-      <p>Click on the Tauri, Vite, and Solid logos to learn more.</p>
-
-      <form
+      <form /* Search bar; Add clear button to set searchTerm to an empty string. if searchTerm is empty, just display some flatpak apps */
         class="row"
         onSubmit={(e) => {
           e.preventDefault();
@@ -88,22 +81,26 @@ function App() {
         />
         <button type="submit">Greet</button>
       </form>
+      /* Results (this can be search results or generic app suggestions, depending on if searchTerm is empty) */
+
 
       <p>{output()}</p>
       <p>{devlog()}</p>
     </div>
   );
 
-  const softwareMenu = ( // This is where a given app will be displayed with all its info
+  const localMenu = ( // This is your installed apps are shown
     <div class="container">
       <p>{devlog()}</p>
     </div>
   );
-  const htmlHelp = ( // This is for help and info
+
+  const helpMenu = ( // This is for help and info
     <div class="container">
       <h1>Help</h1>
       <p>Howdy! I'm Gage, a computer science student at Texas A&M. This app gives users an easy, safe, and free way to install software by leveraging Flatpak's universal package manager. I'm using the Tauri framework to develop this app, which is a very fast, memory efficient way to make cross-platform desktop apps. I hope you enjoy using this app as much as I enjoyed making it!</p>
       <p>gagehowe@tamu.edu</p>
+
       <p>{devlog()}</p> 
     </div>
   );
@@ -114,6 +111,18 @@ function App() {
         <p>This app requires Flatpak to be installed. Would you like to install it now?</p>
         <button onClick={() => initialize_flatpak()}>Yes</button>
         <a href="https://flatpak.org/" target="_blank">Learn more about Flatpak</a>
+
+        <button onClick={popupIsOpen() ? togglePopup : togglePopup}>Open Popup</button>
+
+        {popupIsOpen() && (
+          <div class="modal">
+            <div class="modal-content">
+              <h2>Modal Title</h2>
+              <p>Modal content...</p>
+              <button onClick={togglePopup}>Close</button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -121,15 +130,15 @@ function App() {
   check_flatpak();
   if (mode() == 1) {
     setDevlog("mode is " + mode());
-    return (htmlMenu);
+    return (mainMenu);
   }
   else if (mode() == 2) {
     setDevlog("mode is " + mode());
-    return (softwareMenu);
+    return (localMenu);
   }
   else {
     setDevlog("mode is " + mode());
-    return (htmlHelp);
+    return (helpMenu);
   }
 }
 
