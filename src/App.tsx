@@ -6,12 +6,13 @@ import html from "solid-js/html";
 import { app } from "@tauri-apps/api";
 
 function App() {
-  const [flatpakIsInstalled, setFlatpakIsInstalled] = createSignal(false);
+  const [flatpakIsInstalled, setFlatpakIsInstalled] = createSignal(true);
   const [file, setFile] = createSignal(""); // path to a file, if we need it
   const [fileContent, setFileContent] = createSignal(""); // temporary storage for the contents of the file; is this even necessary?
   const [output, setOutput] = createSignal("");
   const [searchTerm, setSearchTerm] = createSignal("");
   const [searchResult, setSearchResult] = createSignal("");
+  const [installedApps, setInstalledApps] = createSignal(""); // list of installed apps
   const [mode, setMode] = createSignal(1); // modes: 1 = main menu, 2 = software menu, 3 = help menu
   const [devlog, setDevlog] = createSignal(""); // for debugging
   const [theme, setTheme] = createSignal(1); // themes: 1 = standard light, 2 = standard dark. Don't know how to implement this yet.
@@ -20,7 +21,21 @@ function App() {
   const togglePopup = () => {
     setPopupIsOpen(!popupIsOpen());
   }
+  const [appContent, setAppContent] = createSignal(""); // the content of the app that the user is currently looking at
 
+function renderMode() {
+  if (mode() === 1) {
+    return mainMenu;
+  } else if (mode() === 2) {
+    (async () => {
+      const installedApps = await list_installed_flatpak();
+      setInstalledApps(installedApps as string); {/* verify this works */}
+    })();
+    return localMenu;
+  } else if (mode() === 3) {
+    return helpMenu;
+  }
+}
   async function initialize_flatpak() {
     const result = await invoke("initialize_flatpak");
     console.log("initialize_flatpak yielded ", result);
@@ -63,10 +78,18 @@ function App() {
     console.log("uninstall_flatpak with app ", currentApp(), "yielded ", result);
     return result;
   }
-
+  const Switcher = (
+    <div>
+      <button onClick={() => setMode(1)}>Main Menu</button>
+      <button onClick={() => setMode(2)}>Local Menu</button>
+      <button onClick={() => setMode(3)}>Help Menu</button>
+    </div>
+  );
   const mainMenu = ( // This is the main menu, where the user can browse or search for software
     <div class="container">
-      <h1>Welcome to Tauri!</h1>
+        {Switcher} {/* mode switcher with buttons for main menu, local menu, etc*/}
+
+      <h1>tauri app</h1>
       <form /* Search bar; Add clear button to set searchTerm to an empty string. if searchTerm is empty, just display some flatpak apps */
         class="row"
         onSubmit={(e) => {
@@ -77,9 +100,9 @@ function App() {
         <input
           id="greet-input"
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Enter a name..."
+          placeholder="Search..."
         />
-        <button type="submit">Greet</button>
+        <button type="submit">Search</button>
       </form>
       /* Results (this can be search results or generic app suggestions, depending on if searchTerm is empty) */
 
@@ -89,8 +112,10 @@ function App() {
     </div>
   );
 
-  const localMenu = ( // This is your installed apps are shown
+  const localMenu = ( // installed apps
     <div class="container">
+      <h1>Installed Apps</h1>
+      <p>{installedApps()}</p>
       <p>{devlog()}</p>
     </div>
   );
@@ -105,6 +130,9 @@ function App() {
     </div>
   );
 
+
+{/*
+  check_flatpak();
   if (flatpakIsInstalled() == false) {
     return (
       <div class="container">
@@ -117,25 +145,30 @@ function App() {
         {popupIsOpen() && (
           <div class="modal">
             <div class="modal-content">
-              <h2>Modal Title</h2>
-              <p>Modal content...</p>
+              <h2>Title: the name of the software</h2>
+              <p>text: data about the software</p>
               <button onClick={togglePopup}>Close</button>
+              <button onClick={togglePopup}>Install</button>
             </div>
           </div>
         )}
       </div>
     );
   }
+*/}
 
-  check_flatpak();
   if (mode() == 1) {
     setDevlog("mode is " + mode());
     return (mainMenu);
   }
-  else if (mode() == 2) {
-    setDevlog("mode is " + mode());
-    return (localMenu);
-  }
+else if (mode() == 2) {
+  setDevlog("mode is " + mode());
+  (async () => {
+    const installedApps = await list_installed_flatpak();
+    setInstalledApps(installedApps as string); {/* verify this works */}
+  })();
+  return (localMenu);
+}
   else {
     setDevlog("mode is " + mode());
     return (helpMenu);
